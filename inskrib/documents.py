@@ -9,7 +9,14 @@ from inskrib.utils import ProgressBar
 class Document():
     """
 
-    ПОЗЖЕ НАПИСАТЬ ДОКУ
+    Класс для обработки большого количества документов 
+        - result_path - путь для сохранения всех обработанных файлов, по стандарту 'result',
+        - result_autographs - путь для сохранения готовых подписей, по стандарту "result/autographs",
+        - result_persons - путь для сохранения индексированных людей которым принадлежит подпись, по стандарту "result/persons.csv",
+        - result_filenames - путь для сохранения, по стандарту "result/filenames.csv",
+        - result_temp - путь для сохранения временных файлов, по стандарту "result/temp",
+        - output_picture_type - формат сохранения файлов, по стандарту "png",
+        - grouping - будут ли подписи группироваться по человеку, по стандарту False
 
     """
 
@@ -20,7 +27,8 @@ class Document():
         result_persons="result/persons.csv",
         result_filenames="result/filenames.csv",
         result_temp="result/temp",
-        output_picture_type="png"
+        output_picture_type="png",
+        grouping: bool = False
     ) -> None:
         self.__result_path = result_path
         self.__result_autographs = result_autographs
@@ -28,8 +36,12 @@ class Document():
         self.__result_filenames = result_filenames
         self.__result_temp = result_temp
         self.__output_picture_type = output_picture_type
+        self.__grouping = grouping
 
     def __create_storage(self) -> None:
+        """
+        Метод для создания всех нужных директорий
+        """
         if not os.path.exists(self.__result_path):
             os.mkdir(self.__result_path)
         if not os.path.exists(self.__result_autographs):
@@ -40,28 +52,53 @@ class Document():
         open(self.__result_filenames, "w")
         open(self.__result_persons, "w")
 
-    # write id into persons.txt, one id for one person
     def __write_new_person(self, person: str) -> None:
+        """
+        Метод для записи всех людей в отдельный csv файл
+            - person - имя человека
+        """
         with open(self.__result_persons, 'a') as file:
             file.write(f'{person}\n')
 
-    # write filename into indexed.csv
-    def __write_new_filename(self, string: str) -> None:
+    def __write_new_filename(self, filename: str) -> None:
+        """
+        Метод для записи имен файлов всех сохраненных подписей в отдельный csv файл
+            - filename - имя файла
+        """
         with open(self.__result_filenames, 'a') as file:
-            file.write(f'{string}\n')
+            file.write(f'{filename}\n')
 
     def __get_person_name(self, dirpath) -> str:
+        """
+        Метод для получения имени человека в транслите
+            - dirpath - полный путь до директории этого человека
+
+        Возвращает строку с обработанным именем
+        """
         person = dirpath.split('\\').pop()
         person = unidecode.unidecode(person)
         return person
 
     def __pdf_to_image(self, path_to_file, path_to_save):
+        """
+        Метод для перевода pdf файла в изображение
+            - path_to_file - путь до pdf файла
+            - path_to_save - пусть для сохранения готового изображения
+        """
         with fitz.open(path_to_file) as pdf:
             page = pdf.load_page(0)
             pix = page.get_pixmap()
             pix.save(path_to_save)
 
     def __save_temp_file(self, dirpath, filename, person, id, index) -> None:
+        """
+        Метод для перевода pdf файла в изображение
+            - dirpath - олный путь до директории этого человека 
+            - filename - имя файла
+            - person - имя человека
+            - id - индетификатор человека
+            - index - порядковый номер файла
+        """
         splited_filename = filename.split('.')
 
         path_to_file = f'{dirpath}/{filename}'
@@ -75,9 +112,18 @@ class Document():
         shutil.copyfile(path_to_file, path_to_save)
 
     def __save_authograph(self, path, picture) -> None:
+        """
+        Метод для сохранения подписи
+            - path - путь сохранения подписи
+            - picture - изображение в виде MatLike из opencv
+        """
         cv2.imwrite(path, picture)
 
-    def __process_temp(self, path: str) -> str:
+    def __process_temp(self, path: str) -> None:
+        """
+        Метод для первоначальной обработки документов
+            - path - путь до директории с документами, которые нужно обработать
+        """
         prefix = 'Process Temp Files:'
         length = len(os.listdir(path)) - 2
         ProgressBar.print(0, length, prefix)
@@ -85,8 +131,13 @@ class Document():
         id = 0
         for dirpath, _, filenames in os.walk(path):
             person = self.__get_person_name(dirpath)
+
             if (person == path):
                 continue
+
+            grouping_path = f'{self.__result_autographs}/{person}'
+            if self.__grouping and not os.path.exists(grouping_path):
+                os.mkdir(grouping_path)
 
             self.__write_new_person(f'{person},{id}')
 
@@ -99,6 +150,10 @@ class Document():
             ProgressBar.print(id, length, prefix)
 
     def __process_authograph(self, autograph) -> None:
+        """
+        Метод для получения подписей из всех документов
+            - autograph - инстанс класса inskrib.Autograph
+        """
         prefix = 'Process Authograph:'
         length = len(os.listdir(self.__result_temp))
         ProgressBar.print(0, length, prefix)
@@ -107,6 +162,10 @@ class Document():
         for picture in os.listdir(self.__result_temp):
             path_to_save = f'{self.__result_autographs}/{picture}'
             path_to_picture = f'{self.__result_temp}/{picture}'
+
+            if (self.__grouping):
+                person = picture.split('-')[1]
+                path_to_save = f'{self.__result_autographs}/{person}/{picture}'
 
             id = picture.split('-')[0]
 
@@ -121,9 +180,24 @@ class Document():
             ProgressBar.print(index, length, prefix)
 
     def __remove_temp(self) -> None:
+        """
+        Метод для удаления temp (временной) директории
+        """
         shutil.rmtree(self.__result_temp)
 
+    def set_grouping(self, grouping_type: bool) -> None:
+        """
+        Метод для изменения состояния у переменной __grouping
+        """
+        self.__grouping = grouping_type
+
     def get_authoraphs(self, path: str, autograph, remove_temp: bool = True) -> None:
+        """
+        Метод для получения готовых подписей и csv файлов из документов
+            - path - путь до директории с документами
+            - autograph - инстанс класса inskrib.Autograph
+            - remove_temp - отвечает за удаление temp (временной) директории, по стандарту True 
+        """
         self.__create_storage()
         self.__process_temp(path)
         self.__process_authograph(autograph)

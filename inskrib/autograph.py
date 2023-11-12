@@ -5,7 +5,14 @@ import numpy as np
 class Autograph():
     """
 
-    ПОЗЖЕ НАПИСАТЬ ДОКУ
+    Класс для получения подписи из документа (pdf, png, jpg, bmp)
+        - color_low - нижняя граница hsv цвета, по которому находится цветная печать и подпись, по стандарту [0, 50, 0]
+        - color_hight верхняя граница hsv цвета, по которому находится цветная печать и подпись, по стандарту [255, 255, 255]
+        - blur - насколько сильно будет размываться изображение, чем сильнее размытие, тем сильнее печать становиться более круглой, что упростит ее нахождение и удаление, по стандарту (3, 3)
+        - min_radius - минимальный радиус для удаления окружности (печати), по стандарту 80
+        - max_radius - максимальный радиус для удаления окружности (печати), по стандарту 200
+        - precent_expansion - увеличение области удаления окружности (печати), чем больше значение, тем более большой круг вырежеться, если 0 - то будет окружность будет вырезана четко по контуру, оставляя небольшие следы из пикселей, по стандарту 0.15
+        - size - размер выходного изображения, по стандарту (256, 256)
 
     """
 
@@ -28,6 +35,12 @@ class Autograph():
         self.__size = size
 
     def __remove_text(self, picture):
+        """
+        Метод для очистки документа от текста, оставляя только печать и подпись в заданом диапозоне цветов, по стандарту оставляет синий цвет
+            - picture - объект MatLike из opencv
+
+        Возвращает объект MatLike из opencv
+        """
         hsv = cv2.cvtColor(picture, cv2.COLOR_BGR2HSV)
 
         low = np.array(self.__color_low)
@@ -40,6 +53,12 @@ class Autograph():
         return rgb
 
     def __remove_print(self, picture):
+        """
+        Метод для удаления круглой печати
+            - picture - объект MatLike из opencv
+
+        Возвращает объект MatLike из opencv
+        """
         gray_blurred = cv2.blur(picture, self.__blur)
         detected_circles = cv2.HoughCircles(
             image=gray_blurred,
@@ -71,11 +90,23 @@ class Autograph():
         return picture
 
     def __finishing_lines(self, picture):
+        """
+        Метод для удаление разрывов на подписи, так как при удалении текста и печать, в некоторых местах она разрывается из-за чего в последствии она обрежеться не корректно
+            - picture - объект MatLike из opencv
+
+        Возвращает объект MatLike из opencv
+        """
         kernel = np.ones((3, 3), np.uint8)
         picture = cv2.erode(picture, kernel, iterations=3)
         return picture
 
     def __crop_picture(self, picture):
+        """
+        Метод для обрезки изображения по контурам подписи
+            - picture - объект MatLike из opencv
+
+        Возвращает объект MatLike из opencv
+        """
         _, thresh_gray = cv2.threshold(
             picture,
             thresh=100,
@@ -103,14 +134,33 @@ class Autograph():
         return crop_picture
 
     def __resize_picture(self, picture):
+        """
+        Метод для изменеия размеров изображения
+            - picture - объект MatLike из opencv
+
+        Возвращает объект MatLike из opencv
+        """
         picture = cv2.resize(picture, self.__size)
         return picture
 
     def rotate_picture(self, picture, direction: int):
+        """
+        Метод для переворачивания изображения
+            - picture - объект MatLike из opencv
+            - direction - rotateCode
+
+        Возвращает объект MatLike из opencv
+        """
         picture = cv2.rotate(picture, direction)
         return picture
 
     def get_clear_autograph(self, path: str):
+        """
+        Метод для получения готовой, очищенной подписи
+            - path - путь к изображению
+
+        Возвращает объект MatLike из opencv
+        """
         picture = cv2.imread(path, cv2.IMREAD_COLOR)
 
         picture = self.__remove_text(picture)
