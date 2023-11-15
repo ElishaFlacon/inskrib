@@ -6,3 +6,6 @@ __pycache__
 data
 result
 main.py
+
+dist
+*.egg-info
