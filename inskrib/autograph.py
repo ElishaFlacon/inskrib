@@ -12,6 +12,7 @@ class Autograph():
         - min_radius - минимальный радиус для удаления окружности (печати), по стандарту 80
         - max_radius - максимальный радиус для удаления окружности (печати), по стандарту 200
         - precent_expansion - увеличение области удаления окружности (печати), чем больше значение, тем более большой круг вырежеться, если 0 - то будет окружность будет вырезана четко по контуру, оставляя небольшие следы из пикселей, по стандарту 0.15
+        - pixel_thickness - ширина пикселей, чем больше - тем меньше шанс, что подпись разорвертся, но при этом у выходного изображения будут широкие пиксели
         - size - размер выходного изображения, по стандарту (256, 256)
 
     """
@@ -24,6 +25,7 @@ class Autograph():
             min_radius=80,
             max_radius=200,
             precent_expansion=0.15,
+            pixel_thickness=(3, 3),
             size=(256, 256)
     ) -> None:
         self.__color_low = color_low
@@ -32,6 +34,7 @@ class Autograph():
         self.__min_radius = min_radius
         self.__max_radius = max_radius
         self.__precent_expansion = precent_expansion
+        self.__pixel_thickness = pixel_thickness
         self.__size = size
 
     def __remove_text(self, picture):
@@ -96,8 +99,9 @@ class Autograph():
 
         Возвращает объект MatLike из opencv
         """
-        kernel = np.ones((3, 3), np.uint8)
-        picture = cv2.erode(picture, kernel, iterations=3)
+        kernel = np.ones(self.__pixel_thickness, np.uint8)
+        # picture = cv2.dilate(picture, kernel, iterations=1)
+        picture = cv2.erode(picture, kernel, iterations=1)
         return picture
 
     def __crop_picture(self, picture):
