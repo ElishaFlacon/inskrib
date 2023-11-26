@@ -3,6 +3,8 @@ import cv2
 import fitz
 import shutil
 import unidecode
+
+from inskrib.autograph import Autograph
 from inskrib.utils import ProgressBar
 
 
@@ -68,7 +70,7 @@ class Document():
         with open(self.__result_filenames, 'a') as file:
             file.write(f'{filename}\n')
 
-    def __get_person_name(self, dirpath) -> str:
+    def __get_person_name(self, dirpath: str) -> str:
         """
         Метод для получения имени человека в транслите
             - dirpath - полный путь до директории этого человека
@@ -79,7 +81,7 @@ class Document():
         person = unidecode.unidecode(person)
         return person
 
-    def __pdf_to_image(self, path_to_file, path_to_save):
+    def __pdf_to_image(self, path_to_file: str, path_to_save: str):
         """
         Метод для перевода pdf файла в изображение
             - path_to_file - путь до pdf файла
@@ -90,7 +92,7 @@ class Document():
             pix = page.get_pixmap()
             pix.save(path_to_save)
 
-    def __save_temp_file(self, dirpath, filename, person, id, index) -> None:
+    def __save_temp_file(self, dirpath: str, filename: str, person: str, id: str | int, index: str | int) -> None:
         """
         Метод для перевода pdf файла в изображение
             - dirpath - олный путь до директории этого человека 
@@ -149,7 +151,7 @@ class Document():
             id += 1
             ProgressBar.print(id, length, prefix)
 
-    def __process_authograph(self, autograph) -> None:
+    def __process_authographs(self, autograph: Autograph) -> None:
         """
         Метод для получения подписей из всех документов
             - autograph - инстанс класса inskrib.Autograph
@@ -191,7 +193,7 @@ class Document():
         """
         self.__grouping = grouping_type
 
-    def get_authoraphs(self, path: str, autograph, remove_temp: bool = True) -> None:
+    def get_authoraphs(self, path: str, autograph: Autograph, remove_temp: bool = True) -> None:
         """
         Метод для получения готовых подписей и csv файлов из документов
             - path - путь до директории с документами
@@ -200,7 +202,7 @@ class Document():
         """
         self.__create_storage()
         self.__process_temp(path)
-        self.__process_authograph(autograph)
+        self.__process_authographs(autograph)
 
         if remove_temp:
             self.__remove_temp()

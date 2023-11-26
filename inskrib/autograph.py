@@ -1,4 +1,6 @@
 import cv2
+from cv2.typing import MatLike
+
 import numpy as np
 
 
@@ -37,7 +39,7 @@ class Autograph():
         self.__pixel_thickness = pixel_thickness
         self.__size = size
 
-    def __remove_text(self, picture):
+    def __remove_text(self, picture: MatLike) -> MatLike:
         """
         Метод для очистки документа от текста, оставляя только печать и подпись в заданом диапозоне цветов, по стандарту оставляет синий цвет
             - picture - объект MatLike из opencv
@@ -55,7 +57,7 @@ class Autograph():
         rgb = cv2.cvtColor(picture, cv2.COLOR_RGB2BGR)
         return rgb
 
-    def __remove_print(self, picture):
+    def __remove_print(self, picture: MatLike) -> MatLike:
         """
         Метод для удаления круглой печати
             - picture - объект MatLike из opencv
@@ -92,7 +94,7 @@ class Autograph():
 
         return picture
 
-    def __finishing_lines(self, picture):
+    def __finishing_lines(self, picture: MatLike) -> MatLike:
         """
         Метод для удаление разрывов на подписи, так как при удалении текста и печать, в некоторых местах она разрывается из-за чего в последствии она обрежеться не корректно
             - picture - объект MatLike из opencv
@@ -100,11 +102,38 @@ class Autograph():
         Возвращает объект MatLike из opencv
         """
         kernel = np.ones(self.__pixel_thickness, np.uint8)
-        # picture = cv2.dilate(picture, kernel, iterations=1)
         picture = cv2.erode(picture, kernel, iterations=1)
         return picture
 
-    def __crop_picture(self, picture):
+    def __skeletonization(self, picture: MatLike) -> MatLike:
+        """
+        Метод для скелетирования изображения (метдо работает плохо, из-за этого не используется)
+            - picture - объект MatLike из opencv
+
+        Возвращает объект MatLike из opencv
+        """
+        picture = cv2.bitwise_not(picture)
+
+        size = np.size(picture)
+        skeleton = np.zeros(picture.shape, np.uint8)
+
+        element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
+        done = False
+
+        while (not done):
+            eroded = cv2.erode(picture, element)
+            temp = cv2.dilate(eroded, element)
+            temp = cv2.subtract(picture, temp)
+            skeleton = cv2.bitwise_or(skeleton, temp)
+            picture = eroded.copy()
+
+            zeros = size - cv2.countNonZero(picture)
+            if zeros == size:
+                done = True
+
+        return skeleton
+
+    def __crop_picture(self, picture: MatLike) -> MatLike:
         """
         Метод для обрезки изображения по контурам подписи
             - picture - объект MatLike из opencv
@@ -137,7 +166,7 @@ class Autograph():
         crop_picture = picture[y:y+h, x:x+w]
         return crop_picture
 
-    def __resize_picture(self, picture):
+    def resize_picture(self, picture: MatLike) -> MatLike:
         """
         Метод для изменеия размеров изображения
             - picture - объект MatLike из opencv
@@ -147,7 +176,7 @@ class Autograph():
         picture = cv2.resize(picture, self.__size)
         return picture
 
-    def rotate_picture(self, picture, direction: int):
+    def rotate_picture(self, picture: MatLike, direction: int) -> MatLike:
         """
         Метод для переворачивания изображения
             - picture - объект MatLike из opencv
@@ -158,7 +187,7 @@ class Autograph():
         picture = cv2.rotate(picture, direction)
         return picture
 
-    def get_clear_autograph(self, path: str):
+    def get_clear_autograph(self, path: str) -> MatLike:
         """
         Метод для получения готовой, очищенной подписи
             - path - путь к изображению
@@ -174,6 +203,7 @@ class Autograph():
         picture = self.__remove_print(picture)
         picture = self.__finishing_lines(picture)
         picture = self.__crop_picture(picture)
-        picture = self.__resize_picture(picture)
+        # picture = self.__skeletonization(picture)
+        picture = self.resize_picture(picture)
 
         return picture
