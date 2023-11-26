@@ -1,4 +1,3 @@
-from io import open
 from setuptools import setup, find_packages
 from pathlib import Path
 
@@ -10,7 +9,7 @@ from pathlib import Path
 """
 
 
-VERSION = '0.0.1.0'
+VERSION = '0.0.1.1'
 NAME = 'inskrib'
 
 HERE = Path(__file__).parent.resolve()
@@ -52,6 +51,5 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
     ]
 )
