@@ -92,7 +92,7 @@ class Document():
             pix = page.get_pixmap()
             pix.save(path_to_save)
 
-    def __save_temp_file(self, dirpath: str, filename: str, person: str, id: str | int, index: str | int) -> None:
+    def __save_temp_file(self, dirpath: str, filename: str, person: str, id: str, index: str) -> None:
         """
         Метод для перевода pdf файла в изображение
             - dirpath - олный путь до директории этого человека 
