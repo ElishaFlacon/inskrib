@@ -194,7 +194,7 @@ class Autograph():
 
         Возвращает объект MatLike из opencv
         """
-        picture = cv2.imread(path, cv2.IMREAD_COLOR)
+        picture = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
 
         picture = self.__remove_text(picture)
 
