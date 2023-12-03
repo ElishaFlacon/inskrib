@@ -141,8 +141,6 @@ class Document():
             if self.__grouping and not os.path.exists(grouping_path):
                 os.mkdir(grouping_path)
 
-            self.__write_new_person(f'{person},{id}')
-
             index = 0
             for filename in filenames:
                 self.__save_temp_file(dirpath, filename, person, id, index)
@@ -161,15 +159,20 @@ class Document():
         ProgressBar.print(0, length, prefix)
 
         index = 0
+        current_person = ""
         for picture in os.listdir(self.__result_temp):
             path_to_save = f'{self.__result_autographs}/{picture}'
             path_to_picture = f'{self.__result_temp}/{picture}'
 
+            id = picture.split('-')[0]
+            person = picture.split('-')[1]
+
             if (self.__grouping):
-                person = picture.split('-')[1]
                 path_to_save = f'{self.__result_autographs}/{person}/{picture}'
 
-            id = picture.split('-')[0]
+            if (current_person != person):
+                current_person = person
+                self.__write_new_person(f'{person},{id}')
 
             try:
                 ath = autograph.get_clear_autograph(path_to_picture)
