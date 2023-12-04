@@ -15,7 +15,8 @@ class Document():
         - result_path - путь для сохранения всех обработанных файлов, по стандарту 'result',
         - result_autographs - путь для сохранения готовых подписей, по стандарту "result/autographs",
         - result_persons - путь для сохранения индексированных людей которым принадлежит подпись, по стандарту "result/persons.csv",
-        - result_filenames - путь для сохранения, по стандарту "result/filenames.csv",
+        - result_filenames - путь для сохранения имен обработанных файлов, по стандарту "result/filenames.csv",
+        - result_trash - путь для сохранения бракованных файлов, по стандарту "result/trash.csv",
         - result_temp - путь для сохранения временных файлов, по стандарту "result/temp",
         - output_picture_type - формат сохранения файлов, по стандарту "png",
         - grouping - будут ли подписи группироваться по человеку, по стандарту False
@@ -28,6 +29,7 @@ class Document():
         result_autographs="result/autographs",
         result_persons="result/persons.csv",
         result_filenames="result/filenames.csv",
+        result_trash="result/trash.csv",
         result_temp="result/temp",
         output_picture_type="png",
         grouping: bool = False
@@ -39,6 +41,7 @@ class Document():
         self.__result_temp = result_temp
         self.__output_picture_type = output_picture_type
         self.__grouping = grouping
+        self.__result_trash = result_trash
 
     def __create_storage(self) -> None:
         """
@@ -53,6 +56,7 @@ class Document():
 
         open(self.__result_filenames, "w")
         open(self.__result_persons, "w")
+        open(self.__result_trash, "w")
 
     def __write_new_person(self, person: str) -> None:
         """
@@ -61,6 +65,14 @@ class Document():
         """
         with open(self.__result_persons, 'a') as file:
             file.write(f'{person}\n')
+
+    def __write_new_trash(self, trash: str) -> None:
+        """
+        Метод для записи бракованных файлов в отдельный csv файл
+            - trash - бракованный файл
+        """
+        with open(self.__result_trash, 'a') as file:
+            file.write(f'{trash}\n')
 
     def __write_new_filename(self, filename: str) -> None:
         """
@@ -179,7 +191,7 @@ class Document():
                 self.__save_authograph(path_to_save, ath)
                 self.__write_new_filename(f'{picture},{id}')
             except Exception:
-                pass
+                self.__write_new_trash(path_to_picture)
 
             index += 1
             ProgressBar.print(index, length, prefix)
