@@ -9,7 +9,7 @@ from pathlib import Path
 """
 
 
-VERSION = '0.0.1.7'
+VERSION = '0.0.1.8'
 NAME = 'inskrib'
 
 HERE = Path(__file__).parent.resolve()

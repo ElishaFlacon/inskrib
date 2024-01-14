@@ -107,7 +107,7 @@ class Document():
     def __save_temp_file(self, dirpath: str, filename: str, person: str, id: str, index: str) -> None:
         """
         Метод для перевода pdf файла в изображение
-            - dirpath - олный путь до директории этого человека 
+            - dirpath - полный путь до директории этого человека 
             - filename - имя файла
             - person - имя человека
             - id - индетификатор человека
