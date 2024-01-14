@@ -89,7 +89,7 @@ class Document():
 
         Возвращает строку с обработанным именем
         """
-        person = dirpath.split('\\').pop()
+        person = dirpath.replace("\\", "/").split('/').pop()
         person = unidecode.unidecode(person)
         return person
 
